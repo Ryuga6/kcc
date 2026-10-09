@@ -1726,9 +1726,9 @@ class KCCGUI(QObject, KCC_ui.Ui_mainWindow):
 
         self._addInitialTips()
 
-        # Language switch button
+        # Language switch button: plain text so it adapts to light/dark mode automatically
         self.languageButton = QToolButton()
-        self.languageButton.setIcon(QIcon(':/Other/icons/language.png'))
+        self.languageButton.setText(' 文 A ')  # spaces add padding
         self.languageButton.setToolTip(self.tr('Switch language / 切换语言 / 言語 / 언어'))
         self.languageButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.languageMenu = QMenu(self.languageButton)
