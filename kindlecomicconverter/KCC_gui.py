@@ -1140,13 +1140,22 @@ class KCCGUI(QObject, KCC_ui.Ui_mainWindow):
         # 语言按钮 tooltip
         self.languageButton.setToolTip(self.tr('Switch language / 切换语言 / 言語 / 언어'))
         # 刷新 jobList 中的初始提示消息（直接更新 label 文本，不影响后面的用户消息）
-        if hasattr(self, '_initialTipLabels'):
-            for label, source, icon in self._initialTipLabels:
-                label.setText(self.tr(source))
+        # 不保存 label 引用（C++ 对象可能已被删除），而是从 jobList 重新获取
+        if hasattr(self, '_initialTipSources'):
+            for i, (source, _icon) in enumerate(self._initialTipSources):
+                if i < GUI.jobList.count():
+                    item = GUI.jobList.item(i)
+                    if item is not None:
+                        label = GUI.jobList.itemWidget(item)
+                        if label is not None:
+                            try:
+                                label.setText(self.tr(source))
+                            except RuntimeError:
+                                pass  # C++ object already deleted, skip
 
     def _addInitialTips(self):
-        """添加初始提示消息，并保存 label 引用以便语言切换时刷新。"""
-        self._initialTipLabels = []
+        """添加初始提示消息，并保存 source 原文以便语言切换时刷新。"""
+        self._initialTipSources = []
 
         tip_sources = [
             ('<b>Tip:</b> Hover mouse over options/buttons to see explanations. Boxes can be partially/fully checked.', 'info'),
@@ -1156,26 +1165,19 @@ class KCCGUI(QObject, KCC_ui.Ui_mainWindow):
         ]
         for source, icon in tip_sources:
             self.addMessage(self.tr(source), icon)
-            # 保存刚添加的 label 引用和 source 原文
-            item = GUI.jobList.item(GUI.jobList.count() - 1)
-            label = GUI.jobList.itemWidget(item)
-            self._initialTipLabels.append((label, source, icon))
+            self._initialTipSources.append((source, icon))
 
         if self.startNumber < 5:
             source = ('Since you are a new user of <b>KCC</b> please see few '
                             '<a href="https://github.com/ciromattia/kcc/wiki/Important-tips">important tips</a>.')
             self.addMessage(self.tr(source), 'info')
-            item = GUI.jobList.item(GUI.jobList.count() - 1)
-            label = GUI.jobList.itemWidget(item)
-            self._initialTipLabels.append((label, source, 'info'))
+            self._initialTipSources.append((source, 'info'))
 
         if not any([self.tar, self.sevenzip]):
             source = ('<a href="https://github.com/ciromattia/kcc#7-zip">Install 7z (link)</a>'
                             ' to enable CBZ/CBR/ZIP/etc processing.')
             self.addMessage(self.tr(source), 'warning')
-            item = GUI.jobList.item(GUI.jobList.count() - 1)
-            label = GUI.jobList.itemWidget(item)
-            self._initialTipLabels.append((label, source, 'warning'))
+            self._initialTipSources.append((source, 'warning'))
 
     def changeLanguage(self, lang_code):
         self.language = i18n.apply_language(lang_code)
