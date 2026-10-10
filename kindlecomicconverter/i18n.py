@@ -22,6 +22,9 @@ def apply_language(lang_code):
     """
     global _translator
     app = QCoreApplication.instance()
+    if app is None:
+        # QApplication 尚未创建，无法安装翻译器；保持默认语言
+        return DEFAULT_LANGUAGE
     if _translator is not None:
         app.removeTranslator(_translator)
         _translator = None
